@@ -50,7 +50,7 @@ public :
 		return (node->left == nullptr && node->right == nullptr);
 	}
 
-	void findNode(int find_id)
+	Node* findNode(int find_id, char commandType)
 	{
 		// 존재하면 애플리케이션의 정보를 출력, 존재하지 않으면 NULL출력
 		Node* curNode = this->root;
@@ -59,17 +59,31 @@ public :
 		{
 			if (curNode->id == find_id)
 			{
-				cout << depth << curNode->name << curNode->capacity << curNode->price << "\n";
-				return;
+				if (commandType == FIND)
+					cout << depth << curNode->name << curNode->capacity << curNode->price << "\n";
+				else if (commandType == UPDATE)
+					cout << depth << "\n";
+				return curNode;
 			}
 			else if (curNode->id > find_id)
 				curNode = curNode->left;
-			else
+			else 
 				curNode = curNode->right;
 			depth++;
 		}
 		cout << "NULL\n";
-		return;
+		return nullptr;
+	}
+	
+	void updateNode(int id, string name, int capacity, int price)
+	{
+		Node* curNode = findNode(id, UPDATE);
+		if (curNode != nullptr)
+		{
+			curNode->name = name;
+			curNode->capacity = capacity;
+			curNode->price = price;
+		}
 	}
 };
 
