@@ -24,6 +24,12 @@ enum Color
 	BLACK
 };
 
+enum Direction
+{
+	LEFT,
+	RIGHT
+};
+
 struct Node
 {
 	// 생성자
@@ -34,21 +40,21 @@ struct Node
 		parent = nullptr;
 	}
 
-	int id;
-	int capacity;
-	int price;
-	string name;
-	Color color;
-	Node* left;
-	Node* right;
-	Node* parent;
+int id;
+int capacity;
+int price;
+string name;
+Color color;
+Node* left;
+Node* right;
+Node* parent;
 };
 
 class RedBlackTree {
 private:
 	Node* root;
 
-public : 
+public:
 	RedBlackTree() {
 		root = nullptr;
 	}
@@ -58,7 +64,7 @@ public :
 		return (node->left == nullptr && node->right == nullptr);
 	}
 
-	pair<Node*,bool> findNode(int find_id, char commandType)
+	pair<Node*, bool> findNode(int find_id, char commandType)
 	{
 		// 존재하면 애플리케이션의 정보를 출력, 존재하지 않으면 NULL출력
 		Node* curNode = this->root;
@@ -68,7 +74,7 @@ public :
 			if (curNode->id == find_id)
 			{
 				if (commandType == FIND)
-					cout << depth << curNode->name << curNode->capacity << curNode->price << "\n";
+					cout << depth << ' ' << curNode->name << ' ' << curNode->capacity << ' ' << curNode->price << "\n";
 				else if (commandType == UPDATE || commandType == INSERT)
 					cout << depth << "\n";
 				return { curNode, true };
@@ -83,7 +89,7 @@ public :
 					return { curNode, false };
 				}
 			}
-			else 
+			else
 			{
 				if (curNode->right != nullptr)
 					curNode = curNode->right;
@@ -99,15 +105,138 @@ public :
 			cout << "NULL\n";
 		return { nullptr,false };// node가 하나도 없을 때
 	}
-	
+
 	void updateNode(int id, string name, int capacity, int price)
 	{
-		pair<Node* , bool> nodeInfo = findNode(id, UPDATE);
+		pair<Node*, bool> nodeInfo = findNode(id, UPDATE);
 		if (nodeInfo.second == true)
 		{
 			nodeInfo.first->name = name;
 			nodeInfo.first->capacity = capacity;
 			nodeInfo.first->price = price;
+		}
+	}
+
+	void fixDoubleRed(Node* curNode)
+	{
+		Node* parent = curNode->parent;
+		Node* grandparent = parent->parent;
+		Node* great_grandparent = grandparent->parent; // 조부모의 부모
+		Node* uncle = nullptr;
+		Color uncleColor = BLACK;
+		Direction direction;
+		
+		// parent의 sibling node가 RED인지 BLACK인지 확인해야 함
+		if (grandparent->left == parent)
+			uncle = grandparent->right;
+		else if (grandparent->right == parent)
+			uncle = grandparent->left;
+		if (uncle != nullptr)
+			uncleColor = uncle->color;
+
+		if (uncleColor == BLACK)
+		{
+			
+			// curNode, parent, grandparent끼리 restruct => 부모는 BLACK, 자식은 RED로 칠해야 함
+			if ((grandparent->left == parent && parent->left == curNode) || (grandparent->right == parent && parent->right == curNode))
+			{
+				// 무조건 parent가 새로운 sub트리의 parent
+				direction = (parent->left == curNode ? LEFT : RIGHT); // 3개 노드(curNode, parent, grandparent)가 어느 쪽으로 뻗어있는 지
+				if (direction == LEFT)
+				{
+					// parent의 딸린 자식 grandparent에 추가
+					if (parent->right != nullptr)
+						parent->right->parent = grandparent;
+					grandparent->left = parent->right;
+
+					// parent와 grandparent의 부모관계 바꿈
+					grandparent->parent = parent;
+					parent->right = grandparent;
+				}
+				else if (direction == RIGHT)
+				{
+					// parent의 딸린 자식 grandparent에 추가
+					if (parent->left != nullptr)
+						parent->left->parent = grandparent;
+					grandparent->right = parent->left;
+
+					// parent와 grandparent의 부모관계 바꿈
+					grandparent->parent = parent;
+					parent->left = grandparent;
+				}
+				// parent의 새로운 부모 갱신
+				parent->parent = great_grandparent;
+				if (great_grandparent != nullptr)
+				{
+					if (great_grandparent->left == grandparent)
+						great_grandparent->left = parent;
+					else
+						great_grandparent->right = parent;
+				}
+				// 색 바꿈
+				parent->color = BLACK;
+				grandparent->color = RED;
+				curNode->color = RED;
+			}
+			else {
+				// 무조건 curNode가 새로운 sub트리의 parent
+				direction = (parent->left == curNode ? LEFT : RIGHT); // parent의 어느쪽 자식이 curNode인지
+				if (direction == LEFT)
+				{
+					if (curNode->left != nullptr)
+						curNode->left->parent = grandparent;
+					grandparent->right = curNode->left;
+
+					if (curNode->right != nullptr)
+						curNode->right->parent = parent;
+					parent->left = curNode->right;
+
+					curNode->left = grandparent;
+					grandparent->parent = curNode;
+
+					curNode->right = parent;
+					parent->parent = curNode;
+				}
+				else if (direction == RIGHT)
+				{
+					if (curNode->left != nullptr)
+						curNode->left->parent = parent;
+					parent->right = curNode->left;
+
+					if (curNode->right != nullptr)
+						curNode->right->parent = grandparent;
+					grandparent->left = curNode->right;
+
+					curNode->left = parent;
+					parent->parent = curNode;
+					
+					curNode->right = grandparent;
+					grandparent->parent = curNode;
+				}
+				// curNode의 새로운 부모 갱신
+				curNode->parent = great_grandparent;
+				if (great_grandparent != nullptr)
+				{
+					if (great_grandparent->left == grandparent)
+						great_grandparent->left = curNode;
+					else
+						great_grandparent->right = curNode;
+				}
+				// 색 바꿈
+				parent->color = RED;
+				grandparent->color = RED;
+				curNode->color = BLACK;
+			}
+
+		}
+		else if (uncleColor == RED) {
+			//recoloring 
+			uncle->color = BLACK;
+			parent->color = BLACK;
+			if (grandparent != this->root)
+				grandparent->color = RED;
+			if (grandparent->parent != nullptr && grandparent->parent->color == RED)
+				fixDoubleRed(grandparent);
 		}
 	}
 
@@ -125,6 +254,7 @@ public :
 			// node가 하나도 없을 때 => root 추가해야함
 			newNode->color = BLACK;
 			this->root = newNode;
+			cout << "0\n";
 			return;
 		}
 		newNode->parent = parent;
@@ -132,10 +262,9 @@ public :
 			parent->left = newNode;
 		else
 			parent->right = newNode;
-		if (parent->color == RED)
-		{
-
-		}
+		if (parent->color == RED && parent->parent != nullptr)
+			fixDoubleRed(newNode);
+		findNode(id, INSERT);
 	}
 };
 
