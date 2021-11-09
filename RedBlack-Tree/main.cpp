@@ -18,8 +18,43 @@ int input_discount; // 할인율
 int input_start; // 범위 시작
 int input_end; // 범위 끝
 
-int main() {
+enum Color 
+{
+	RED,
+	BLACK
+};
 
+struct Node
+{
+	int id;
+	int capacity;
+	int price;
+	string name;
+	Color color = RED;
+	Node* left = nullptr;
+	Node* right = nullptr;
+	Node* parent = nullptr;
+};
+
+class RedBlackTree {
+private:
+	Node* root;
+
+public : 
+	RedBlackTree() {
+		root = nullptr;
+	}
+
+	bool isLeafNode(Node* node)
+	{
+		return (node->left == nullptr && node->right == nullptr);
+	}
+
+};
+
+int main() 
+{
+	RedBlackTree* rdTree = new RedBlackTree();
 	cin >> inputCommandCnt;
 	while (inputCommandCnt--)
 	{
