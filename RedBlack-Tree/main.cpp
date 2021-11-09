@@ -50,6 +50,27 @@ public :
 		return (node->left == nullptr && node->right == nullptr);
 	}
 
+	void findNode(int find_id)
+	{
+		// 존재하면 애플리케이션의 정보를 출력, 존재하지 않으면 NULL출력
+		Node* curNode = this->root;
+		int depth = 0;
+		while (curNode != nullptr)
+		{
+			if (curNode->id == find_id)
+			{
+				cout << depth << curNode->name << curNode->capacity << curNode->price << "\n";
+				return;
+			}
+			else if (curNode->id > find_id)
+				curNode = curNode->left;
+			else
+				curNode = curNode->right;
+			depth++;
+		}
+		cout << "NULL\n";
+		return;
+	}
 };
 
 int main() 
@@ -70,6 +91,7 @@ int main()
 			// 입력으로 주어진 애플리케이션 ID를 탐색
 			// 존재하면 애플리케이션의 정보를 출력, 존재하지 않으면 NULL출력
 			cin >> input_id;
+			rdTree->findNode(input_id);
 			break;
 		case UPDATE:
 			//입력으로 주어진 애플리케이션 ID를 탐색하여 존재
