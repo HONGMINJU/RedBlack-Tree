@@ -26,14 +26,22 @@ enum Color
 
 struct Node
 {
+	// 생성자
+	Node(int id, int capacity, int price, string name) : id(id), capacity(capacity), price(price), name(name) {
+		color = RED; // 추가하는 node는 무조건 빨강(root제외)
+		left = nullptr;
+		right = nullptr;
+		parent = nullptr;
+	}
+
 	int id;
 	int capacity;
 	int price;
 	string name;
-	Color color = RED;
-	Node* left = nullptr;
-	Node* right = nullptr;
-	Node* parent = nullptr;
+	Color color;
+	Node* left;
+	Node* right;
+	Node* parent;
 };
 
 class RedBlackTree {
@@ -50,7 +58,7 @@ public :
 		return (node->left == nullptr && node->right == nullptr);
 	}
 
-	Node* findNode(int find_id, char commandType)
+	pair<Node*,bool> findNode(int find_id, char commandType)
 	{
 		// 존재하면 애플리케이션의 정보를 출력, 존재하지 않으면 NULL출력
 		Node* curNode = this->root;
@@ -61,28 +69,72 @@ public :
 			{
 				if (commandType == FIND)
 					cout << depth << curNode->name << curNode->capacity << curNode->price << "\n";
-				else if (commandType == UPDATE)
+				else if (commandType == UPDATE || commandType == INSERT)
 					cout << depth << "\n";
-				return curNode;
+				return { curNode, true };
 			}
 			else if (curNode->id > find_id)
-				curNode = curNode->left;
+			{
+				if (curNode->left != nullptr)
+					curNode = curNode->left;
+				else {
+					if (commandType != INSERT)
+						cout << "NULL\n";
+					return { curNode, false };
+				}
+			}
 			else 
-				curNode = curNode->right;
+			{
+				if (curNode->right != nullptr)
+					curNode = curNode->right;
+				else {
+					if (commandType != INSERT)
+						cout << "NULL\n";
+					return { curNode, false };
+				}
+			}
 			depth++;
 		}
-		cout << "NULL\n";
-		return nullptr;
+		if (commandType != INSERT)
+			cout << "NULL\n";
+		return { nullptr,false };// node가 하나도 없을 때
 	}
 	
 	void updateNode(int id, string name, int capacity, int price)
 	{
-		Node* curNode = findNode(id, UPDATE);
-		if (curNode != nullptr)
+		pair<Node* , bool> nodeInfo = findNode(id, UPDATE);
+		if (nodeInfo.second == true)
 		{
-			curNode->name = name;
-			curNode->capacity = capacity;
-			curNode->price = price;
+			nodeInfo.first->name = name;
+			nodeInfo.first->capacity = capacity;
+			nodeInfo.first->price = price;
+		}
+	}
+
+	void insertNode(int id, string name, int capacity, int price)
+	{
+		pair<Node*, bool> nodeInfo = findNode(id, INSERT);
+		
+		if (nodeInfo.second == true) // 해당 id 이미 존재함
+			return;
+		
+		Node* parent = nodeInfo.first;
+		Node* newNode = new Node(id, capacity, price, name);
+		if (parent == nullptr)
+		{
+			// node가 하나도 없을 때 => root 추가해야함
+			newNode->color = BLACK;
+			this->root = newNode;
+			return;
+		}
+		newNode->parent = parent;
+		if (parent->id > id)
+			parent->left = newNode;
+		else
+			parent->right = newNode;
+		if (parent->color == RED)
+		{
+
 		}
 	}
 };
@@ -100,17 +152,19 @@ int main()
 			// 애플리케이션 정보(id, 이름, 용량, 가격)를 입력받아 레드블랙트리에 노드를 삽입하고, 그 노드의 깊이를 출력
 			// 만약 해당 애플리케이션이 이미 등록되어 있다면, 그 노드의 깊이를 출력하고 등록은 거절
 			cin >> input_id >> input_name >> input_capacity >> input_price;
+			rdTree->insertNode(input_id, input_name, input_capacity, input_price);
 			break;
 		case FIND:
 			// 입력으로 주어진 애플리케이션 ID를 탐색
 			// 존재하면 애플리케이션의 정보를 출력, 존재하지 않으면 NULL출력
 			cin >> input_id;
-			rdTree->findNode(input_id);
+			rdTree->findNode(input_id, FIND);
 			break;
 		case UPDATE:
 			//입력으로 주어진 애플리케이션 ID를 탐색하여 존재
 			//존재하면 정보 업데이트, 존재하지 않으면 NULL출력
 			cin >> input_id >> input_name >> input_capacity >> input_price;
+			rdTree->updateNode(input_id, input_name, input_capacity, input_price);
 			break;
 		case DISCOUNT:
 			// 범위를 입력받아 범위 내 ID를 가진 애플리케이션의 가격 할인
