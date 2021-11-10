@@ -144,6 +144,7 @@ public:
 				direction = (parent->left == curNode ? LEFT : RIGHT); // 3개 노드(curNode, parent, grandparent)가 어느 쪽으로 뻗어있는 지
 				if (direction == LEFT)
 				{
+					//cout << ">straight left\n";
 					// parent의 딸린 자식 grandparent에 추가
 					if (parent->right != nullptr)
 						parent->right->parent = grandparent;
@@ -155,6 +156,7 @@ public:
 				}
 				else if (direction == RIGHT)
 				{
+					//cout << ">straight right\n";
 					// parent의 딸린 자식 grandparent에 추가
 					if (parent->left != nullptr)
 						parent->left->parent = grandparent;
@@ -177,12 +179,17 @@ public:
 				parent->color = BLACK;
 				grandparent->color = RED;
 				curNode->color = RED;
+				if (grandparent == this->root)
+				{
+					this->root = parent;
+				}
 			}
 			else {
 				// 무조건 curNode가 새로운 sub트리의 parent
 				direction = (parent->left == curNode ? LEFT : RIGHT); // parent의 어느쪽 자식이 curNode인지
 				if (direction == LEFT)
 				{
+					//cout << ">curve left\n";
 					if (curNode->left != nullptr)
 						curNode->left->parent = grandparent;
 					grandparent->right = curNode->left;
@@ -199,6 +206,7 @@ public:
 				}
 				else if (direction == RIGHT)
 				{
+					//cout << ">curve right\n";
 					if (curNode->left != nullptr)
 						curNode->left->parent = parent;
 					parent->right = curNode->left;
@@ -226,11 +234,16 @@ public:
 				parent->color = RED;
 				grandparent->color = RED;
 				curNode->color = BLACK;
+				if (grandparent == this->root)
+				{
+					this->root = curNode;
+				}
 			}
 
 		}
 		else if (uncleColor == RED) {
 			//recoloring 
+			//cout << ">recoloring\n";
 			uncle->color = BLACK;
 			parent->color = BLACK;
 			if (grandparent != this->root)
@@ -263,8 +276,28 @@ public:
 		else
 			parent->right = newNode;
 		if (parent->color == RED && parent->parent != nullptr)
+		{
+			//cout << ">insert double red!!\n";
 			fixDoubleRed(newNode);
+		}
+		else {
+			//cout << ">insert no double red\n";
+		}
 		findNode(id, INSERT);
+	}
+
+	void print(Node* target)
+	{
+		if (target == nullptr)
+			return;
+		std::cout << target->id << " ";
+		print(target->left);
+		print(target->right);
+	}
+
+	Node* getRoot()
+	{
+		return this->root;
 	}
 };
 
@@ -282,6 +315,9 @@ int main()
 			// 만약 해당 애플리케이션이 이미 등록되어 있다면, 그 노드의 깊이를 출력하고 등록은 거절
 			cin >> input_id >> input_name >> input_capacity >> input_price;
 			rdTree->insertNode(input_id, input_name, input_capacity, input_price);
+			//cout << "> result insert " << input_id << "\n";
+			//rdTree->print(rdTree->getRoot());
+			//cout << "\n";
 			break;
 		case FIND:
 			// 입력으로 주어진 애플리케이션 ID를 탐색
